@@ -1,5 +1,6 @@
-#post_install() {
-# Put stuff here to automatically cron the script
-#}
+post_install() {
+  echo 'Add a line ih the crontab calling:'
+  echo 'freedns.py UPDATE_KEY IP_FILE'
+}
 
 # vim:set ts=2 sw=2 et:
