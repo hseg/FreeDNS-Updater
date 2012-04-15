@@ -17,7 +17,7 @@ import stat
 from urllib.request import urlopen
 import argparse
 
-debug = false
+debug = False
 def msg(str):
     if debug:
         print(str)
@@ -30,7 +30,7 @@ parser.add_argument('-d', '--debug', action='store_true', help='Turn on debuggin
 args = parser.parse_args(sys.argv)
 
 debug = args.debug
-msg("Arguments passed:\n"
+msg("Arguments passed:\n")
 msg(str(args))
 
 # FreeDNS Update URL
