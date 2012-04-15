@@ -30,7 +30,7 @@ parser.add_argument('-d', '--debug', action='store_true', help='Turn on debuggin
 args = parser.parse_args(sys.argv)
 
 debug = args.debug
-msg("Arguments passed:\n")
+msg("Arguments passed:")
 msg(str(args))
 
 # FreeDNS Update URL
