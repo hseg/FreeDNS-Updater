@@ -26,7 +26,7 @@ import sys
 import os
 import time
 import stat
-from urllib import urlopen
+from urllib.request import urlopen
 
 # FreeDNS Update Key
 update_key = "UPDATE_KEY_HASH"
@@ -45,24 +45,23 @@ ip_file = ".freedns_ip"
 
 # Create the file if it doesnt exist otherwise update old IP
 if not os.path.exists(ip_file):
-	fh = open(ip_file, "w")
-	fh.write(external_ip)
-	fh.close()
-	last_external_ip = "Unknown"
-	print("Created FreeDNS IP log file: " + ip_file)
+    fh = open(ip_file, "wb")
+    fh.write(external_ip)
+    fh.close()
+    last_external_ip = "Unknown"
+    print("Created FreeDNS IP log file: " + ip_file)
+    print("External IP updated to (" + str(external_ip) + ")")
 else:
-	fh = open(ip_file, "r")
-	last_external_ip = fh.read()
-	last_external_ip = last_external_ip.rstrip('\n')
+    fh = open(ip_file, "rb")
+    last_external_ip = fh.readline()
 
 # Check old IP against current IP and update if necessary
-if last_external_ip != external_ip:
-	urlopen(update_url)
-	print("External IP updated FROM (" + last_external_ip + ") TO (" + external_ip + ")")
-	fh = open(ip_file, "w")
-	fh.write(external_ip)
-	fh.close()
-else:
-	last_ip_update = time.ctime(os.stat(ip_file).st_mtime)
-	print("External IP (" + external_ip + ") has not changed. Last update was " + last_ip_update)
-
+if last_external_ip != external_ip and last_external_ip != "Unknown":
+    urlopen(update_url)
+    print("External IP updated FROM (" + str(last_external_ip) + ") TO (" + str(external_ip) + ")")
+    fh = open(ip_file, "wb")
+    fh.write(external_ip)
+    fh.close()
+elif last_external_ip != "Unknown":
+    last_ip_update = time.ctime(os.stat(ip_file).st_mtime)
+    print("External IP (" + str(external_ip) + ") has not changed. Last update was " + str(last_ip_update))
