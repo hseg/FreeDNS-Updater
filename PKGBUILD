@@ -5,7 +5,7 @@
 
 # Maintainer: Menachem Mostowicz <moystovi@g.jct.ac.il>
 pkgname=freedns-updater-git
-pkgver=1.0
+pkgver=20120416
 pkgrel=1
 pkgdesc="Updates freedns.afraid.org dynamic dns domains"
 arch=('any')
@@ -26,7 +26,7 @@ build() {
     cd "$_gitname" && git pull origin
     msg "The local files are updated."
   else
-    git clone --depth=1 "$_gitroot" "$_gitname"
+    git clone "$_gitroot" "$_gitname"
   fi
 
   msg "GIT checkout done or server timeout"
