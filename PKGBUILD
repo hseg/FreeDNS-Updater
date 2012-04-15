@@ -38,6 +38,7 @@ build() {
 
 package() {
   cd "$srcdir/$_gitname-build"
+  mkdir -p "$pkgdir/usr/bin/"
   install freedns.py "$pkgdir/usr/bin/"
 }
 
