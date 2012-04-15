@@ -15,6 +15,8 @@ depends=('python')
 makedepends=('git')
 install='INSTALL'
 changelog='CHANGELOG'
+source=('UNLICENSE')
+md5sums=('464de46b424b82da11f364be1bb9411c')
 _gitroot="git://github.com/InvisibleEngineer/FreeDNS-Updater.git"
 _gitname=FreeDNS-Updater
 
@@ -40,6 +42,8 @@ package() {
   cd "$srcdir/$_gitname-build"
   mkdir -p "$pkgdir/usr/bin/"
   install freedns.py "$pkgdir/usr/bin/"
+  mkdir -p "$pkgdir/usr/share/licenses/$pkgname/"
+  install UNLICENSE "$pkgdir/usr/share/licenses/$pkgname/"
 }
 
 # vim:set ts=2 sw=2 et:
