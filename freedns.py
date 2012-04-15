@@ -17,20 +17,33 @@ import stat
 from urllib.request import urlopen
 import argparse
 
+debug = false
+def msg(str):
+    if debug:
+        print(str)
+
 parser = argparse.ArgumentParser(description = "Updates the IP of a freedns domain")
 parser.add_argument('update_key',
                     help='The update key of the domain, located at the end of the direct update link')
 parser.add_argument('ip_file', default='/var/freedns_ip', help='The file where the last known IP address is stored')
+parser.add_argument('-d', '--debug', action='store_true', help='Turn on debugging')
 args = parser.parse_args(sys.argv)
+
+debug = args.debug
+msg("Arguments passed:\n"
+msg(str(args))
 
 # FreeDNS Update URL
 update_url = "http://freedns.afraid.org/dynamic/update.php?" + args.update_key
+msg("Using update url " + update_url)
 
 # External IP URL (must return an IP in plain text)
 ip_url = "http://www.danielgibbs.net/ip.php"
+msg("Using IP checking url " + ip_url)
 
 # Open URL to return the external IP
 external_ip = urlopen(ip_url).read()
+msg("Got external IP " + external_ip)
 
 # Create the file if it doesnt exist otherwise update old IP
 if not os.path.exists(args.ip_file):
