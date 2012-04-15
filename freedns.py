@@ -1,3 +1,4 @@
+#!$(which python)
 """
  Redistributed with minor modifications by Menachem D. Mostowicz
  Source URL: http://www.dangibbs.co.uk/journal/freedns-python-ip-updater-for-linux
