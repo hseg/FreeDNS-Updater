@@ -38,7 +38,7 @@ build() {
 
 package() {
   cd "$srcdir/$_gitname-build"
-  install freedns.py "$pkgdir/usr/bin"
+  install freedns.py "$pkgdir/usr/bin/"
 }
 
 # vim:set ts=2 sw=2 et:
