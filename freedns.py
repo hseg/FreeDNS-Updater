@@ -1,4 +1,4 @@
-#!$(which python)
+#!/usr/bin/python
 """
  Redistributed with minor modifications by Menachem D. Mostowicz
  Source URL: http://www.dangibbs.co.uk/journal/freedns-python-ip-updater-for-linux
@@ -8,20 +8,7 @@
                with the current external IP of the computer.
  Quick Linux DNS IP Updater Python script for FreeDNS (freedns.afraid.org)
 
- Author: Daniel Gibbs
- Version: 0.2
- URL: http://www.danielgibbs.net/
-
- ** Must set update_key and make sure that ip_file is read and writable
-
- This program is free software; you can redistribute it and/or modify it under
- the terms of the GNU General Public License as published by the Free Software
- Foundation; either version 2 of the License, or (at your option) any later
- version.
-
- This program is distributed in the hope that it will be useful, but WITHOUT
- ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ Original author: Daniel Gibbs - http://www.danielgibbs.net/
  """
 import sys
 import os
@@ -31,12 +18,13 @@ from urllib.request import urlopen
 import argparse
 
 parser = argparse.ArgumentParser(description = "Updates the IP of a freedns domain")
-parser.add_argument('update_key', required=True,
+parser.add_argument('update_key',
                     help='The update key of the domain, located at the end of the direct update link')
 parser.add_argument('ip_file', default='/var/freedns_ip', help='The file where the last known IP address is stored')
+args = parser.parse_args(sys.argv)
 
 # FreeDNS Update URL
-update_url = "http://freedns.afraid.org/dynamic/update.php?" + update_key
+update_url = "http://freedns.afraid.org/dynamic/update.php?" + args.update_key
 
 # External IP URL (must return an IP in plain text)
 ip_url = "http://www.danielgibbs.net/ip.php"
@@ -45,24 +33,24 @@ ip_url = "http://www.danielgibbs.net/ip.php"
 external_ip = urlopen(ip_url).read()
 
 # Create the file if it doesnt exist otherwise update old IP
-if not os.path.exists(ip_file):
-    fh = open(ip_file, "wb")
+if not os.path.exists(args.ip_file):
+    fh = open(args.ip_file, "wb")
     fh.write(external_ip)
     fh.close()
     last_external_ip = "Unknown"
-    print("Created FreeDNS IP log file: " + ip_file)
+    print("Created FreeDNS IP log file: " + args.ip_file)
     print("External IP updated to (" + str(external_ip) + ")")
 else:
-    fh = open(ip_file, "rb")
+    fh = open(args.ip_file, "rb")
     last_external_ip = fh.readline()
 
 # Check old IP against current IP and update if necessary
 if last_external_ip != external_ip and last_external_ip != "Unknown":
     urlopen(update_url)
     print("External IP updated FROM (" + str(last_external_ip) + ") TO (" + str(external_ip) + ")")
-    fh = open(ip_file, "wb")
+    fh = open(args.ip_file, "wb")
     fh.write(external_ip)
     fh.close()
 elif last_external_ip != "Unknown":
-    last_ip_update = time.ctime(os.stat(ip_file).st_mtime)
+    last_ip_update = time.ctime(os.stat(args.ip_file).st_mtime)
     print("External IP (" + str(external_ip) + ") has not changed. Last update was " + str(last_ip_update))
