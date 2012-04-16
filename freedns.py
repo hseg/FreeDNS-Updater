@@ -8,7 +8,7 @@
                with the current external IP of the computer.
  Quick Linux DNS IP Updater Python script for FreeDNS (freedns.afraid.org)
 
- Original author: Daniel Gibbs - http://www.danielgibbs.net/
+ Original author: Daniel Gibbs - http://www.dangibbs.co.uk/
  """
 import sys
 import os
@@ -39,7 +39,7 @@ update_url = "http://freedns.afraid.org/dynamic/update.php?" + args.update_key
 msg("Using update url " + update_url)
 
 # External IP URL (must return an IP in plain text)
-ip_url = "http://www.danielgibbs.net/ip.php"
+ip_url = "http://www.dangibbs.co.uk/ip.php"
 msg("Using IP checking url " + ip_url)
 
 # Open URL to return the external IP
