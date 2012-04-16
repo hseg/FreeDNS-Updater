@@ -28,9 +28,12 @@ import os
 import time
 import stat
 from urllib.request import urlopen
+import argparse
 
-# FreeDNS Update Key
-update_key = "UPDATE_KEY_HASH"
+parser = argparse.ArgumentParser(description = "Updates the IP of a freedns domain")
+parser.add_argument('update_key', required=True,
+                    help='The update key of the domain, located at the end of the direct update link')
+parser.add_argument('ip_file', default='/var/freedns_ip', help='The file where the last known IP address is stored')
 
 # FreeDNS Update URL
 update_url = "http://freedns.afraid.org/dynamic/update.php?" + update_key
@@ -40,9 +43,6 @@ ip_url = "http://www.danielgibbs.net/ip.php"
 
 # Open URL to return the external IP
 external_ip = urlopen(ip_url).read()
-
-# The file where the last known external IP is written
-ip_file = ".freedns_ip"
 
 # Create the file if it doesnt exist otherwise update old IP
 if not os.path.exists(ip_file):
