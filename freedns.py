@@ -25,7 +25,8 @@ def msg(str):
 parser = argparse.ArgumentParser(description = "Updates the IP of a freedns domain")
 parser.add_argument('update_key',
                     help='The update key of the domain, located at the end of the direct update link')
-parser.add_argument('ip_file', default='/var/freedns_ip', help='The file where the last known IP address is stored')
+parser.add_argument('ip_file', default='/var/freedns_ip',
+                    nargs = '?', help='The file where the last known IP address is stored')
 parser.add_argument('-d', '--debug', action='store_true', help='Turn on debugging')
 args = parser.parse_args(sys.argv)
 
