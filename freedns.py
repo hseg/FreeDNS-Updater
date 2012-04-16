@@ -28,7 +28,7 @@ parser.add_argument('update_key',
 parser.add_argument('ip_file', default='/var/freedns_ip',
                     nargs = '?', help='The file where the last known IP address is stored')
 parser.add_argument('-d', '--debug', action='store_true', help='Turn on debugging')
-args = parser.parse_args(sys.argv)
+args = parser.parse_args()
 
 debug = args.debug
 msg("Arguments passed:")
