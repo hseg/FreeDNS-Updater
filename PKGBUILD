@@ -5,7 +5,7 @@
 
 # Maintainer: Menachem Mostowicz <moystovi@g.jct.ac.il>
 pkgname=freedns-updater-git
-pkgver=20120416
+pkgver=$(date +%Y%m%d)
 pkgrel=1
 pkgdesc="Updates freedns.afraid.org dynamic dns domains"
 arch=('any')
