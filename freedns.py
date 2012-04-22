@@ -15,7 +15,10 @@ import os
 import time
 import stat
 from urllib.request import urlopen
+import socket
 import argparse
+
+socket.setdefaulttimeout(120)
 
 debug = False
 def msg(str):
