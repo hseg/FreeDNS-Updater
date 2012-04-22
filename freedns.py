@@ -39,30 +39,30 @@ update_url = "http://freedns.afraid.org/dynamic/update.php?" + args.update_key
 msg("Using update url " + update_url)
 
 # External IP URL (must return an IP in plain text)
-ip_url = "http://www.dangibbs.co.uk/ip.php"
+ip_url = "http://automation.whatismyip.com/n09230945.asp"
 msg("Using IP checking url " + ip_url)
 
 # Open URL to return the external IP
-external_ip = urlopen(ip_url).read()
+external_ip = urlopen(ip_url).read().decode('utf-8')
 msg("Got external IP " + external_ip)
 
 # Create the file if it doesnt exist otherwise update old IP
 if not os.path.exists(args.ip_file):
-    fh = open(args.ip_file, "wb")
+    fh = open(args.ip_file, "w")
     fh.write(external_ip)
     fh.close()
     last_external_ip = "Unknown"
     print("Created FreeDNS IP log file: " + args.ip_file)
     print("External IP updated to (" + str(external_ip) + ")")
 else:
-    fh = open(args.ip_file, "rb")
+    fh = open(args.ip_file, "r")
     last_external_ip = fh.readline()
 
 # Check old IP against current IP and update if necessary
 if last_external_ip != external_ip and last_external_ip != "Unknown":
     urlopen(update_url)
     print("External IP updated FROM (" + str(last_external_ip) + ") TO (" + str(external_ip) + ")")
-    fh = open(args.ip_file, "wb")
+    fh = open(args.ip_file, "w")
     fh.write(external_ip)
     fh.close()
 elif last_external_ip != "Unknown":
