@@ -1,11 +1,6 @@
-# This is an example PKGBUILD file. Use this as a start to creating your own,
-# and remove these comments. For more information, see 'man PKGBUILD'.
-# NOTE: Please fill out the license field for your package! If it is unknown,
-# then please put 'unknown'.
-
-# Maintainer: Menachem Mostowicz <moystovi@g.jct.ac.il>
+# Maintainer: Gesh <moystovi@g.jct.ac.il>
 pkgname=freedns-updater-git
-pkgver=$(date +%Y%m%d)
+pkgver=1.0
 pkgrel=1
 pkgdesc="Updates freedns.afraid.org dynamic dns domains"
 arch=('any')
@@ -15,6 +10,7 @@ depends=('python')
 makedepends=('git')
 install='INSTALL'
 changelog='CHANGELOG'
+source=('https://github.com/InvisibleEngineer/FreeDNS-Updater/tarball/v${pkgver}')
 _gitroot="git://github.com/InvisibleEngineer/FreeDNS-Updater.git"
 _gitname=FreeDNS-Updater
 

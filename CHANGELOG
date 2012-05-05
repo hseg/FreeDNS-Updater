@@ -1,4 +1,13 @@
-2012-04-16 Menachem Mostowicz <moystovi@g.jct.ac.il>
+Future
+	* 1.5 :
+	Use config file
+
+2012-05-06 Gesh <moystovi@g.jct.ac.il>
 
 	* 1.0 :
+	Basic code, runs from command line
+
+2012-04-16 Gesh <moystovi@g.jct.ac.il>
+
+	* 0.1 :
         rudimentary code, works, however
