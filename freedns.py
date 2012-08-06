@@ -8,6 +8,7 @@ from urllib.request import urlopen
 import urllib.error
 import socket
 import argparse
+import configparser
 
 # Set defaults
 socket.setdefaulttimeout(90)
@@ -36,8 +37,26 @@ def get_ip(ip_list):
                 raise
     return ret, fail
 
+def add_head(file, head):
+    # configparser.ConfigParser expects a header in the configuration file,
+    # but we want shell-like configuration files.
+    # So, to keep ConfigParser happy, we add a header to our configs on the fly
+    yield '[{}]\n'.format(head)
+    for line in file:
+        yield line
 
+def list_union(first, second):
+    return list(set(first) | set(second))
 
+# Overwrite defaults with configuration file
+parser = configparser.ConfigParser()
+parser.read_file(add_head(open('/etc/freedns.conf'),'DEFAULT'),
+                '/etc/freedns.conf')
+values = dict(parser['DEFAULT'])
+values['fail_rate'] = float(parser['DEFAULT']['fail_rate'])
+values['check_urls'] = list_union(parser['DEFAULT']['check_urls'],
+                                  args['check_urls'])
+update_new(args, values)
 
 # Overwrite defaults with command line arguments
 parser = argparse.ArgumentParser(

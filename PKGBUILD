@@ -33,8 +33,10 @@ build() {
 
 package() {
   cd "$srcdir/$_gitname-build"
-  install -D -m755 freedns.py "$pkgdir/usr/bin/freedns"
+  install -d -o nobody -g nobody "${pkgdir}/var/cache/$pkgname"
+  install -D -m755 freedns.py "${pkgdir}/usr/bin/freedns"
   install -D -m744 freedns.cron "${pkgdir}/etc/cron.hourly/freedns"
+  install -D -m644 -o root -g root freedns.conf "${pkgdir}/etc/"
   install -D -m644 UNLICENSE "${pkgdir}/usr/share/licenses/$pkgname/UNLICENSE"
 }
 
