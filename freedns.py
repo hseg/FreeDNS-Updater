@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys
 import os
+import pwd
 import time
 import stat
 from urllib.request import urlopen
@@ -90,6 +91,14 @@ if not os.path.exists(args['ip_file']):
 else:
     fh = open(args['ip_file'], "r")
     last_external_ip = fh.readline()
+
+# Check that the ip file is owned by nobody:nobody
+stat = os.stat(args['ip_file'])
+ids = pwd.getpwnam('nobody')
+if (stat.st_uid, stat.st_gid) != (ids.pw_uid, ids.pw_gid):
+    print("Error: IP file {} must be owned by
+        nobody:nobody".format(args['ip_file']))
+    exit(3)
 
 # Check old IP against current IP and update if necessary
 if last_external_ip != external_ip and last_external_ip is not None:
