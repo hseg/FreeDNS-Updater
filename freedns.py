@@ -1,15 +1,4 @@
 #!/usr/bin/python
-"""
- Redistributed with minor modifications by Menachem D. Mostowicz
- Source URL: http://www.dangibbs.co.uk/journal/freedns-python-ip-updater-for-linux
-
- Instructions: Set update_key to the sha1 hash at the end of the direct update
-               url given by freedns. The script will update the freedns entry
-               with the current external IP of the computer.
- Quick Linux DNS IP Updater Python script for FreeDNS (freedns.afraid.org)
-
- Original author: Daniel Gibbs - http://www.dangibbs.co.uk/
- """
 import sys
 import os
 import time
