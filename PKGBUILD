@@ -1,6 +1,6 @@
 # Maintainer: Gesh <moystovi@g.jct.ac.il>
 pkgname=freedns-updater-git
-pkgver=1.0
+pkgver=20120806
 pkgrel=1
 pkgdesc="Updates freedns.afraid.org dynamic dns domains"
 arch=('any')
@@ -10,7 +10,6 @@ depends=('python')
 makedepends=('git')
 install='INSTALL'
 changelog='CHANGELOG'
-source=('https://github.com/InvisibleEngineer/FreeDNS-Updater/tarball/v${pkgver}')
 _gitroot="git://github.com/InvisibleEngineer/FreeDNS-Updater.git"
 _gitname=FreeDNS-Updater
 
