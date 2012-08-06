@@ -8,7 +8,7 @@ url="http://www.github.com/InvisibleEngineer/FreeDNS-Updater"
 license=('custom:UNLICENSE')
 depends=('python')
 makedepends=('git')
-install='INSTALL'
+install='freedns.install'
 changelog='CHANGELOG'
 _gitroot="git://github.com/InvisibleEngineer/FreeDNS-Updater.git"
 _gitname=FreeDNS-Updater
@@ -33,10 +33,9 @@ build() {
 
 package() {
   cd "$srcdir/$_gitname-build"
-  mkdir -p "$pkgdir/usr/bin/"
-  install freedns.py "$pkgdir/usr/bin/"
-  mkdir -p "$pkgdir/usr/share/licenses/$pkgname/"
-  install UNLICENSE "$pkgdir/usr/share/licenses/$pkgname/"
+  install -D -m755 freedns.py "$pkgdir/usr/bin/freedns"
+  install -D -m744 freedns.cron "${pkgdir}/etc/cron.hourly/freedns"
+  install -D -m644 UNLICENSE "${pkgdir}/usr/share/licenses/$pkgname/UNLICENSE"
 }
 
 # vim:set ts=2 sw=2 et:

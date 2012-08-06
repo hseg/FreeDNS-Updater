@@ -1,6 +1,10 @@
 Future
 	* 1.5 :
 	Use config file
+	Instead of INSTALL, use script in cron.hourly
+	and require valid config
+	Thanks to the pkgstats maintainers for much
+	of the code and	ideas regarding the cronjobs
 
 2012-05-06 Gesh <moystovi@g.jct.ac.il>
 

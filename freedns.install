@@ -1,0 +1,3 @@
+post_install() {
+    echo "Note: An hourly cronjob was installed to /etc/cron.hourly/freedns"
+}
