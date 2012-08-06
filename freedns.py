@@ -4,59 +4,104 @@ import os
 import time
 import stat
 from urllib.request import urlopen
+import urllib.error
 import socket
 import argparse
 
-socket.setdefaulttimeout(120)
+# Set defaults
+socket.setdefaulttimeout(90)
+args = {"ip_file":"/var/cache/freedns-updater-git/last_ip",
+        "debug":False,
+        "update_urls":{},
+        "check_urls":
+            ["http://icanhazip.com",
+             "http://ifconfig.me/ip",
+             "http://ip.uostas.net/"],
+        "fail_rate":0.5}
 
-debug = False
-def msg(str):
-    if debug:
-        print(str)
+def update_new(orig, new):
+    orig.update({key:val for key,val in new.items() if val is not None})
 
-parser = argparse.ArgumentParser(description = "Updates the IP of a freedns domain")
-parser.add_argument('update_key',
-                    help='The update key of the domain, located at the end of the direct update link')
-parser.add_argument('ip_file', default='/var/freedns_ip',
-                    nargs = '?', help='The file where the last known IP address is stored')
-parser.add_argument('-d', '--debug', action='store_true', help='Turn on debugging')
-args = parser.parse_args()
+def get_ip(ip_list):
+    ret = []
+    fail = 0
+    for ip_url in ip_list:
+        try:
+            ret.append(urlopen(ip_url).read().decode('utf-8').strip())
+        except urllib.error.URLError as e:
+            if isinstance(e.reason, socket.timeout):
+                fail += 1
+            else:
+                raise
+    return ret, fail
 
-debug = args.debug
-msg("Arguments passed:")
-msg(str(args))
 
-# FreeDNS Update URL
-update_url = "http://freedns.afraid.org/dynamic/update.php?" + args.update_key
-msg("Using update url " + update_url)
 
-# External IP URL (must return an IP in plain text)
-ip_url = "http://automation.whatismyip.com/n09230945.asp"
-msg("Using IP checking url " + ip_url)
 
-# Open URL to return the external IP
-external_ip = urlopen(ip_url).read().decode('utf-8')
-msg("Got external IP " + external_ip)
+# Overwrite defaults with command line arguments
+parser = argparse.ArgumentParser(
+         description = "Updates the IP of a freedns domain")
+parser.add_argument('--update_urls', help='The direct update url of the domain')
+parser.add_argument('--ip_file',
+         help='The file where the last known IP address is stored')
+parser.add_argument('--fail_rate', help='The maximal acceptable failure rate',
+         type=float)
+parser.add_argument('-d', '--debug', action='store_true',
+         help='Print debugging information')
+update_new(args, vars(parser.parse_args()))
 
-# Create the file if it doesnt exist otherwise update old IP
-if not os.path.exists(args.ip_file):
-    fh = open(args.ip_file, "w")
+external_ip, fail = get_ip(args['check_urls'])
+if args['debug']:
+    print("Got IP addresses:")
+    for url,ip in zip(args['check_urls'], external_ip):
+        print("{} -> {}".format(url,ip))
+
+if fail > len(args['check_urls'])*args['fail_rate']:
+    print("Error: The fail rate is above the acceptable rate")
+    exit(1)
+
+if len(set(external_ip)) != 1:
+    print("Error: There is no consensus as to the public IP")
+    print("Answers are: {}".format(external_ip))
+    exit(2)
+
+external_ip = external_ip[0]
+
+if args['debug']:
+    print("Arguments used:")
+    print("  Failure rate: {}".format(args['fail_rate']))
+    print("  IP file: {}".format(args['ip_file']))
+    print("  Update url: {}".format(args['update_urls']))
+    print("  IP checking urls")
+    for url in args['check_urls']:
+        print("    -> {}".format(url))
+    print("")
+    print("External IP: {}".format(external_ip))
+
+# Create the ip file if it doesn't exist otherwise update old IP
+if not os.path.exists(args['ip_file']):
+    fh = open(args['ip_file'], "w")
     fh.write(external_ip)
     fh.close()
-    last_external_ip = "Unknown"
-    print("Created FreeDNS IP log file: " + args.ip_file)
-    print("External IP updated to (" + str(external_ip) + ")")
+    last_external_ip = None
+    if args['debug']
+        print("Created FreeDNS IP log file: {}".format(args['ip_file']))
+        print("External IP updated to ({})".format(str(external_ip)))
 else:
-    fh = open(args.ip_file, "r")
+    fh = open(args['ip_file'], "r")
     last_external_ip = fh.readline()
 
 # Check old IP against current IP and update if necessary
-if last_external_ip != external_ip and last_external_ip != "Unknown":
-    urlopen(update_url)
-    print("External IP updated FROM (" + str(last_external_ip) + ") TO (" + str(external_ip) + ")")
-    fh = open(args.ip_file, "w")
+if last_external_ip != external_ip and last_external_ip is not None:
+    urlopen(args['update_urls'])
+    fh = open(args['ip_file'], "w")
     fh.write(external_ip)
     fh.close()
-elif last_external_ip != "Unknown":
-    last_ip_update = time.ctime(os.stat(args.ip_file).st_mtime)
-    print("External IP (" + str(external_ip) + ") has not changed. Last update was " + str(last_ip_update))
+    if args['debug']:
+        print("External IP updated FROM ({}) TO ({})".format(
+            str(last_external_ip), str(external_ip)))
+elif last_external_ip is not None:
+    last_ip_update = time.ctime(os.stat(args['ip_file']).st_mtime)
+    if args['debug']:
+        print("External IP ({}) has not changed.\nLast update was {} ".format(
+            str(last_external_ip), str(last_ip_update)))
