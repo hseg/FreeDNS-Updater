@@ -9,6 +9,7 @@ license=('custom:UNLICENSE')
 depends=('python')
 makedepends=('git')
 install='freedns.install'
+backup=('etc/freedns.conf')
 changelog='CHANGELOG'
 _gitroot="git://github.com/InvisibleEngineer/FreeDNS-Updater.git"
 _gitname=FreeDNS-Updater
