@@ -1,6 +1,8 @@
 Future:
     * 2.0 :
     Allow multiple freedns domains
+    Use distutils?
+    Add logging+quiet output
 
 2012-08-06 Gesh <moystovi@g.jct.ac.il>
     * 1.5 :
