@@ -54,7 +54,7 @@ parser.read_file(add_head(open('/etc/freedns.conf'),'DEFAULT'),
                 '/etc/freedns.conf')
 values = dict(parser['DEFAULT'])
 values['fail_rate'] = float(parser['DEFAULT']['fail_rate'])
-values['check_urls'] = list_union(parser['DEFAULT']['check_urls'],
+values['check_urls'] = list_union(parser['DEFAULT']['check_urls'].split(),
                                   args['check_urls'])
 update_new(args, values)
 
@@ -104,7 +104,7 @@ if not os.path.exists(args['ip_file']):
     fh.write(external_ip)
     fh.close()
     last_external_ip = None
-    if args['debug']
+    if args['debug']:
         print("Created FreeDNS IP log file: {}".format(args['ip_file']))
         print("External IP updated to ({})".format(str(external_ip)))
 else:
@@ -115,8 +115,9 @@ else:
 stat = os.stat(args['ip_file'])
 ids = pwd.getpwnam('nobody')
 if (stat.st_uid, stat.st_gid) != (ids.pw_uid, ids.pw_gid):
-    print("Error: IP file {} must be owned by
-        nobody:nobody".format(args['ip_file']))
+    print("Error: IP file {} owned by {}"
+          "It must be owned by nobody"
+          .format(args['ip_file'], pwd.getpwuid(stat.st_uid).pw_name))
     exit(3)
 
 # Check old IP against current IP and update if necessary

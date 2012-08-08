@@ -1,6 +1,6 @@
 # Maintainer: Gesh <moystovi@g.jct.ac.il>
 pkgname=freedns-updater-git
-pkgver=20120806
+pkgver=20120808
 pkgrel=1
 pkgdesc="Updates freedns.afraid.org dynamic dns domains"
 arch=('any')
