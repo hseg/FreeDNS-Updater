@@ -5,17 +5,7 @@ import errno                               # For errors
 import os, pwd                             # For checking file ownership
 import re, urllib.error                    # For getting the IP from html
 
-# Set defaults
-args = {"ip_file":"/var/cache/freedns-updater-git/last_ip",
-        "debug":False,
-        "update_urls":{},
-        "check_urls":
-            ["http://icanhazip.com",
-             "http://ifconfig.me/ip"],
-        "fail_rate":0.5}
 
-def update_new(orig, new):
-    orig.update({key:val for key,val in new.items() if val is not None})
 
 def get_ip(ip_list, fail_rate):
     ret = {}
@@ -59,39 +49,58 @@ def get_ip(ip_list, fail_rate):
         .format('\n'.join(external_ip.keys())))
     return set(ret.keys()).pop()
 
+def get_config(conf_path):
 # Overwrite defaults with configuration file
-def add_head(file, head):
+    def add_head(file, head):
     # configparser.ConfigParser expects a header in the configuration file,
     # but we want shell-like configuration files.
     # So, to keep ConfigParser happy, we add a header to our configs on the fly
-    yield '[{}]\n'.format(head)
-    for line in file:
-        yield line
+        yield '[{}]\n'.format(head)
+        for line in file:
+            yield line
 
-def list_union(first, second):
-    return list(set(first) | set(second))
+    parser = configparser.ConfigParser()
+    parser.read_file(add_head(open(conf_path),'DEFAULT'), conf_path)
+    ret = {}
+    ret['fail_rate'] = proper_fraction(parser.get('DEFAULT', 'fail_rate',
+                                        fallback="0.5"))
+    ret['check_urls'] = set(parser.get('DEFAULT', 'check_urls',
+                            fallback="").split()) | {"http://icanhazip.com",
+                                                    "http://ifconfig.me/ip"}
+    ret['update_urls'] = set(parser.get('DEFAULT', 'update_urls',
+                            fallback="").split())
+    ret['ip_file'] = parser.get('DEFAULT', 'ip_file',
+                            fallback="/var/cache/freedns-updater-git/last_ip")
+    return ret
 
-# Overwrite defaults with configuration file
-parser = configparser.ConfigParser()
-parser.read_file(add_head(open('/etc/freedns.conf'),'DEFAULT'),
-                '/etc/freedns.conf')
-values = dict(parser['DEFAULT'])
-values['fail_rate'] = float(parser['DEFAULT']['fail_rate'])
-values['check_urls'] = list_union(parser['DEFAULT']['check_urls'].split(),
-                                  args['check_urls'])
-update_new(args, values)
+def proper_fraction(string):
+    # Checks if the string represents a proper fraction, throwing
+    # ArgumentTypeError otherwise
+    value = float(string)
+    if 0 <= value < 1:
+        return value
+    raise argparse.ArgumentTypeError(string + " is not in the range [0,1)")
 
 # Overwrite defaults with command line arguments
 parser = argparse.ArgumentParser(
          description = "Updates the IP of a freedns domain")
-parser.add_argument('--update_urls', help='The direct update url of the domain')
+parser.add_argument('--update_urls', nargs='+',
+        help='The direct update urls of the domains')
+parser.add_argument('--check_urls', nargs='+',
+        help="The URLs of sites that return the requester's IP address")
 parser.add_argument('--ip_file',
          help='The file where the last known IP address is stored')
-parser.add_argument('--fail_rate', help='The maximal acceptable failure rate',
-         type=float)
+parser.add_argument('--fail_rate',
+        help='The maximal acceptable failure rate (Must be in range [0,1))',
+        type=proper_fraction)
+parser.add_argument('--config', help='Alternative configuration path')
 parser.add_argument('-d', '--debug', action='store_true',
          help='Print debugging information')
-update_new(args, vars(parser.parse_args()))
+parser.set_defaults(update_urls = None, check_urls = None, ip_file = None,
+                    fail_rate = None, config = "/etc/freedns.conf")
+cmdline = vars(parser.parse_args())
+args = get_config(cmdline['config'])
+args.update({key:val for key,val in cmdline.items() if val is not None})
 
 external_ip = get_ip(args['check_urls'], args['fail_rate'])
 
