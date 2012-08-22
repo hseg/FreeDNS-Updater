@@ -1,14 +1,9 @@
 #!/usr/bin/python
-import sys
-import os
-import pwd
 import time
-import stat
 from urllib.request import urlopen
-import urllib.error
-import socket
-import argparse
-import configparser
+import argparse, configparser, socket, sys # For configurations
+import os, pwd                             # For checking file ownership
+import urllib.error                        # For getting the IP from html
 
 # Set defaults
 socket.setdefaulttimeout(90)
