@@ -95,17 +95,6 @@ update_new(args, vars(parser.parse_args()))
 
 external_ip = get_ip(args['check_urls'], args['fail_rate'])
 
-if args['debug']:
-    print("Arguments used:")
-    print("  Failure rate: {}".format(args['fail_rate']))
-    print("  IP file: {}".format(args['ip_file']))
-    print("  Update url: {}".format(args['update_urls']))
-    print("  IP checking urls")
-    for url in args['check_urls']:
-        print("    -> {}".format(url))
-    print("")
-    print("External IP: {}".format(external_ip))
-
 # Create the ip file if it doesn't exist otherwise update old IP
 if not os.path.exists(args['ip_file']):
     fh = open(args['ip_file'], "w")
