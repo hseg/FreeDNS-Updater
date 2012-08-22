@@ -17,8 +17,7 @@ args = {"ip_file":"/var/cache/freedns-updater-git/last_ip",
         "update_urls":{},
         "check_urls":
             ["http://icanhazip.com",
-             "http://ifconfig.me/ip",
-             "http://ip.uostas.net/"],
+             "http://ifconfig.me/ip"],
         "fail_rate":0.5}
 
 def update_new(orig, new):
