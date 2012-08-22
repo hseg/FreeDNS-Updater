@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import time
 from urllib.request import urlopen
 import argparse, configparser, socket, sys # For configurations
 import os, pwd                             # For checking file ownership
@@ -123,7 +122,6 @@ if last_external_ip != external_ip and last_external_ip is not None:
         print("External IP updated FROM ({}) TO ({})".format(
             str(last_external_ip), str(external_ip)))
 elif last_external_ip is not None:
-    last_ip_update = time.ctime(os.stat(args['ip_file']).st_mtime)
     if args['debug']:
-        print("External IP ({}) has not changed.\nLast update was {} ".format(
-            str(last_external_ip), str(last_ip_update)))
+        print("External IP ({}) has not changed.".format(
+            str(last_external_ip)))
