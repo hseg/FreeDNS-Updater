@@ -3,7 +3,7 @@ from urllib.request import urlopen
 import argparse, configparser, socket, sys # For configurations
 import errno                               # For errors
 import os, pwd                             # For checking file ownership
-import urllib.error                        # For getting the IP from html
+import re, urllib.error                    # For getting the IP from html
 
 # Set defaults
 args = {"ip_file":"/var/cache/freedns-updater-git/last_ip",
@@ -17,19 +17,49 @@ args = {"ip_file":"/var/cache/freedns-updater-git/last_ip",
 def update_new(orig, new):
     orig.update({key:val for key,val in new.items() if val is not None})
 
-def get_ip(ip_list):
-    ret = []
-    fail = 0
+def get_ip(ip_list, fail_rate):
+    ret = {}
+    begin_regex = r'(?:^|(?<=\s))' # Matches all strings at the beginning of the
+                                   # string or preceded by whitespace
+    end_regex = r'(?:$|(?=\s))' # Matches all strings at the end of the string
+                                # or succeded by whitespace
+    octet_regex = r'25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9]' # Matches all octets
+                                                          # (Strings whose int
+                                                          # conversion is in the
+                                                          # range 0x00-0xFF)
+    ip_regex = re.compile(r'{beg}(?:(?:{oct})\.){{3}}(?:{oct}){end}'
+                    .format(oct = octet_regex, beg=begin_regex, end=end_regex))
     for ip_url in ip_list:
         try:
-            ret.append(urlopen(ip_url).read().decode('utf-8').strip())
+            ips = ip_regex.findall((urlopen(ip_url).read().decode('utf-8')))
+            if len(ips) != 1:
+                print("The result from the IP URL {} is ambiguous."
+                    .format(ip_url))
+                raise ValueError("The result from the IP URL {} is ambiguous."
+                    .format(ip_url))
+            ret[ips[0]] = ret.get(ips[0], []) + [ip_url]
         except urllib.error.URLError as e:
             if isinstance(e.reason, socket.timeout):
-                fail += 1
+                ret['fail'] += ret.get('fail', []) + [ip_url]
             else:
                 raise
-    return ret, fail
 
+    if 'fail' in ret:
+        if len(ret['fail']) > len(ip_list)*fail_rate:
+            print("Error: The fail rate is above the acceptable rate")
+            raise RuntimeError(
+                "Error: The fail rate is above the acceptable rate")
+        del ret['fail']
+    if len(ret.keys()) != 1:
+        print("Error: There is no consensus as to the public IP\n\
+        Possible public IP addresses are: {}"
+        .format('\n'.join(external_ip.keys())))
+        raise RuntimeError("Error: There is no consensus as to the public IP\n\
+        Possible public IP addresses are: {}"
+        .format('\n'.join(external_ip.keys())))
+    return set(ret.keys()).pop()
+
+# Overwrite defaults with configuration file
 def add_head(file, head):
     # configparser.ConfigParser expects a header in the configuration file,
     # but we want shell-like configuration files.
@@ -63,22 +93,7 @@ parser.add_argument('-d', '--debug', action='store_true',
          help='Print debugging information')
 update_new(args, vars(parser.parse_args()))
 
-external_ip, fail = get_ip(args['check_urls'])
-if args['debug']:
-    print("Got IP addresses:")
-    for url,ip in zip(args['check_urls'], external_ip):
-        print("{} -> {}".format(url,ip))
-
-if fail > len(args['check_urls'])*args['fail_rate']:
-    print("Error: The fail rate is above the acceptable rate")
-    exit(1)
-
-if len(set(external_ip)) != 1:
-    print("Error: There is no consensus as to the public IP")
-    print("Answers are: {}".format(external_ip))
-    exit(2)
-
-external_ip = external_ip[0]
+external_ip = get_ip(args['check_urls'], args['fail_rate'])
 
 if args['debug']:
     print("Arguments used:")
