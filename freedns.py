@@ -125,6 +125,8 @@ if __name__ == "__main__":
                         fail_rate = None, config = "/etc/freedns.conf")
     cmdline = vars(parser.parse_args())
 
+    if not os.path.exists(cmdline['config']):
+        raise EnvironmentError(cmdline['config'] + " does not exist")
 
     args = get_config(cmdline['config'])
     args.update({key:val for key,val in cmdline.items() if val is not None})
