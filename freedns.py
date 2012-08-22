@@ -6,7 +6,6 @@ import os, pwd                             # For checking file ownership
 import urllib.error                        # For getting the IP from html
 
 # Set defaults
-socket.setdefaulttimeout(90)
 args = {"ip_file":"/var/cache/freedns-updater-git/last_ip",
         "debug":False,
         "update_urls":{},
