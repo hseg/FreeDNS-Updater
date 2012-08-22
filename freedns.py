@@ -5,8 +5,6 @@ import errno                               # For errors
 import os, pwd                             # For checking file ownership
 import re, urllib.error                    # For getting the IP from html
 
-
-
 def get_ip(ip_list, fail_rate):
     ret = {}
     begin_regex = r'(?:^|(?<=\s))' # Matches all strings at the beginning of the
@@ -49,6 +47,34 @@ def get_ip(ip_list, fail_rate):
         .format('\n'.join(external_ip.keys())))
     return set(ret.keys()).pop()
 
+def write_ip(ip, ip_file, update_urls):
+    with open(ip_file, "a+") as fh:
+        fh.seek(0)
+        last_ip = fh.readline()
+
+# If we just created the IP log file, say so
+    if last_ip == "":
+        print("Created FreeDNS IP log file: {}".format(ip_file))
+
+# Check that the ip file is owned by nobody:nobody
+    stat, ids = (os.stat(ip_file), pwd.getpwnam('nobody'))
+    if (stat.st_uid, stat.st_gid) != (ids.pw_uid, ids.pw_gid):
+        print("Error: IP file {} owned by {}\nIt must be owned by nobody"
+            .format(ip_file, pwd.getpwuid(stat.st_uid).pw_name))
+        raise OSError(errno.EACCES,
+            "Error: IP file {} owned by {}\nIt must be owned by nobody"
+            .format(ip_file, pwd.getpwuid(stat.st_uid).pw_name))
+
+    if ip != last_ip:
+        for url in update_urls:
+            urlopen(url)
+
+    with open(ip_file, "w") as fh:
+        fh.write(ip)
+
+    print("External IP updated {} to ({})".format(
+        (last_ip!="") and "from ({})".format(str(last_ip)) or "", str(ip)))
+
 def get_config(conf_path):
 # Overwrite defaults with configuration file
     def add_head(file, head):
@@ -81,63 +107,26 @@ def proper_fraction(string):
         return value
     raise argparse.ArgumentTypeError(string + " is not in the range [0,1)")
 
+if __name__ == "__main__":
 # Overwrite defaults with command line arguments
-parser = argparse.ArgumentParser(
-         description = "Updates the IP of a freedns domain")
-parser.add_argument('--update_urls', nargs='+',
-        help='The direct update urls of the domains')
-parser.add_argument('--check_urls', nargs='+',
-        help="The URLs of sites that return the requester's IP address")
-parser.add_argument('--ip_file',
-         help='The file where the last known IP address is stored')
-parser.add_argument('--fail_rate',
-        help='The maximal acceptable failure rate (Must be in range [0,1))',
-        type=proper_fraction)
-parser.add_argument('--config', help='Alternative configuration path')
-parser.add_argument('-d', '--debug', action='store_true',
-         help='Print debugging information')
-parser.set_defaults(update_urls = None, check_urls = None, ip_file = None,
-                    fail_rate = None, config = "/etc/freedns.conf")
-cmdline = vars(parser.parse_args())
-args = get_config(cmdline['config'])
-args.update({key:val for key,val in cmdline.items() if val is not None})
+    parser = argparse.ArgumentParser(
+            description = "Updates the IP of freedns domains")
+    parser.add_argument('--update_urls', nargs='+',
+            help='The direct update urls of the domains')
+    parser.add_argument('--check_urls', nargs='+',
+            help="The URLs of sites that return the requester's IP address")
+    parser.add_argument('--ip_file',
+            help='The file where the last known IP address is stored')
+    parser.add_argument('--fail_rate',
+            help='The maximal acceptable failure rate (Must be in range [0,1))',
+            type=proper_fraction)
+    parser.add_argument('--config', help='Alternative configuration path')
+    parser.set_defaults(update_urls = None, check_urls = None, ip_file = None,
+                        fail_rate = None, config = "/etc/freedns.conf")
+    cmdline = vars(parser.parse_args())
 
-external_ip = get_ip(args['check_urls'], args['fail_rate'])
 
-# Create the ip file if it doesn't exist otherwise update old IP
-if not os.path.exists(args['ip_file']):
-    fh = open(args['ip_file'], "w")
-    fh.write(external_ip)
-    fh.close()
-    last_external_ip = None
-    if args['debug']:
-        print("Created FreeDNS IP log file: {}".format(args['ip_file']))
-        print("External IP updated to ({})".format(str(external_ip)))
-else:
-    fh = open(args['ip_file'], "r")
-    last_external_ip = fh.readline()
-
-# Check that the ip file is owned by nobody:nobody
-stat = os.stat(args['ip_file'])
-ids = pwd.getpwnam('nobody')
-if (stat.st_uid, stat.st_gid) != (ids.pw_uid, ids.pw_gid):
-    print("Error: IP file {} owned by {}"
-          "It must be owned by nobody"
-          .format(args['ip_file'], pwd.getpwuid(stat.st_uid).pw_name))
-    raise OSError(errno.EACCES,
-        "Error: IP file {} owned by {}\nIt must be owned by nobody"
-        .format(ip_file, pwd.getpwuid(stat.st_uid).pw_name))
-
-# Check old IP against current IP and update if necessary
-if last_external_ip != external_ip and last_external_ip is not None:
-    urlopen(args['update_urls'])
-    fh = open(args['ip_file'], "w")
-    fh.write(external_ip)
-    fh.close()
-    if args['debug']:
-        print("External IP updated FROM ({}) TO ({})".format(
-            str(last_external_ip), str(external_ip)))
-elif last_external_ip is not None:
-    if args['debug']:
-        print("External IP ({}) has not changed.".format(
-            str(last_external_ip)))
+    args = get_config(cmdline['config'])
+    args.update({key:val for key,val in cmdline.items() if val is not None})
+    write_ip(get_ip(args['check_urls'], args['fail_rate']),
+            args['ip_file'], args['update_urls'])
