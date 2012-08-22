@@ -4,6 +4,13 @@ import argparse, configparser, socket, sys # For configurations
 import errno                               # For errors
 import os, pwd                             # For checking file ownership
 import re, urllib.error                    # For getting the IP from html
+import syslog                              # For logging
+
+def log_info(msg):
+    syslog.syslog(syslog.LOG_INFO, msg)
+
+def log_error(msg):
+    syslog.syslog(syslog.LOG_ERR, msg)
 
 def get_ip(ip_list, fail_rate):
     ret = {}
@@ -21,7 +28,7 @@ def get_ip(ip_list, fail_rate):
         try:
             ips = ip_regex.findall((urlopen(ip_url).read().decode('utf-8')))
             if len(ips) != 1:
-                print("The result from the IP URL {} is ambiguous."
+                log_error("The result from the IP URL {} is ambiguous."
                     .format(ip_url))
                 raise ValueError("The result from the IP URL {} is ambiguous."
                     .format(ip_url))
@@ -34,12 +41,12 @@ def get_ip(ip_list, fail_rate):
 
     if 'fail' in ret:
         if len(ret['fail']) > len(ip_list)*fail_rate:
-            print("Error: The fail rate is above the acceptable rate")
+            log_error("Error: The fail rate is above the acceptable rate")
             raise RuntimeError(
                 "Error: The fail rate is above the acceptable rate")
         del ret['fail']
     if len(ret.keys()) != 1:
-        print("Error: There is no consensus as to the public IP\n\
+        log_error("Error: There is no consensus as to the public IP\n\
         Possible public IP addresses are: {}"
         .format('\n'.join(external_ip.keys())))
         raise RuntimeError("Error: There is no consensus as to the public IP\n\
@@ -54,12 +61,12 @@ def write_ip(ip, ip_file, update_urls):
 
 # If we just created the IP log file, say so
     if last_ip == "":
-        print("Created FreeDNS IP log file: {}".format(ip_file))
+        log_info("Created FreeDNS IP log file: {}".format(ip_file))
 
 # Check that the ip file is owned by nobody:nobody
     stat, ids = (os.stat(ip_file), pwd.getpwnam('nobody'))
     if (stat.st_uid, stat.st_gid) != (ids.pw_uid, ids.pw_gid):
-        print("Error: IP file {} owned by {}\nIt must be owned by nobody"
+        log_error("Error: IP file {} owned by {}\nIt must be owned by nobody"
             .format(ip_file, pwd.getpwuid(stat.st_uid).pw_name))
         raise OSError(errno.EACCES,
             "Error: IP file {} owned by {}\nIt must be owned by nobody"
@@ -72,7 +79,7 @@ def write_ip(ip, ip_file, update_urls):
     with open(ip_file, "w") as fh:
         fh.write(ip)
 
-    print("External IP updated {} to ({})".format(
+    log_info("External IP updated {} to ({})".format(
         (last_ip!="") and "from ({})".format(str(last_ip)) or "", str(ip)))
 
 def get_config(conf_path):
