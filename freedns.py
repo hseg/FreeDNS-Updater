@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from urllib.request import urlopen
 import argparse, configparser, socket, sys # For configurations
+import errno                               # For errors
 import os, pwd                             # For checking file ownership
 import urllib.error                        # For getting the IP from html
 
@@ -110,7 +111,9 @@ if (stat.st_uid, stat.st_gid) != (ids.pw_uid, ids.pw_gid):
     print("Error: IP file {} owned by {}"
           "It must be owned by nobody"
           .format(args['ip_file'], pwd.getpwuid(stat.st_uid).pw_name))
-    exit(3)
+    raise OSError(errno.EACCES,
+        "Error: IP file {} owned by {}\nIt must be owned by nobody"
+        .format(ip_file, pwd.getpwuid(stat.st_uid).pw_name))
 
 # Check old IP against current IP and update if necessary
 if last_external_ip != external_ip and last_external_ip is not None:
