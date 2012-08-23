@@ -126,6 +126,10 @@ if __name__ == "__main__":
         raise EnvironmentError(cmdline['config'] + " does not exist")
 
     args = get_config(cmdline['config'])
+    for opt in ['update_urls', 'check_urls']:
+        args[opt] = args[opt] | set(cmdline[opt])
+        cmdline[opt] = None
+
     args.update({key:val for key,val in cmdline.items() if val is not None})
     write_ip(get_ip(args['check_urls'], args['fail_rate']),
             args['ip_file'], args['update_urls'])
