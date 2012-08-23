@@ -27,10 +27,10 @@ def get_ip(ip_list, fail_rate):
         try:
             ips = ip_regex.findall((urlopen(ip_url).read().decode('utf-8')))
             if len(ips) != 1:
-                log_error("The result from the IP URL {} is ambiguous."
-                    .format(ip_url))
-                raise ValueError("The result from the IP URL {} is ambiguous."
-                    .format(ip_url))
+                msg = "The result from the IP URL {} is ambiguous."
+                    .format(ip_url)
+                log_error(msg)
+                raise ValueError(msg)
             ret[ips[0]] = ret.get(ips[0], []) + [ip_url]
         except urllib.error.URLError as e:
             if isinstance(e.reason, socket.timeout):
@@ -40,17 +40,16 @@ def get_ip(ip_list, fail_rate):
 
     if 'fail' in ret:
         if len(ret['fail']) > len(ip_list)*fail_rate:
-            log_error("Error: The fail rate is above the acceptable rate")
-            raise RuntimeError(
-                "Error: The fail rate is above the acceptable rate")
+            msg = "Error: The fail rate is above the acceptable rate"
+            log_error(msg)
+            raise RuntimeError(msg)
         del ret['fail']
     if len(ret.keys()) != 1:
-        log_error("Error: There is no consensus as to the public IP\n\
+        msg = "Error: There is no consensus as to the public IP\n\
         Possible public IP addresses are: {}"
-        .format('\n'.join(external_ip.keys())))
-        raise RuntimeError("Error: There is no consensus as to the public IP\n\
-        Possible public IP addresses are: {}"
-        .format('\n'.join(external_ip.keys())))
+        .format('\n'.join(external_ip.keys()))
+        log_error(msg)
+        raise RuntimeError(msg)
     return set(ret.keys()).pop()
 
 def write_ip(ip, ip_file, update_urls):
