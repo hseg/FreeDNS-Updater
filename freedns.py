@@ -12,6 +12,12 @@ def log_error(msg):
     syslog.syslog(syslog.LOG_ERR, msg)
 
 def get_ip(ip_list, fail_rate):
+    if len(ip_list) == 0:
+        msg = "Error: There must be at least one IP checking URL\n between the\
+        config file and the command line arguments - none found"
+        log_error(msg)
+        raise EnvironmentError(msg)
+
     ret = {}
     begin_regex = r'(?:^|(?<=\s))' # Matches all strings at the beginning of the
                                    # string or preceded by whitespace
@@ -53,6 +59,12 @@ def get_ip(ip_list, fail_rate):
     return set(ret.keys()).pop()
 
 def write_ip(ip, ip_file, update_urls):
+    if len(update_urls) == 0:
+        msg = "Error: There must be at least one dynamic DNS update URL\n\
+        between the config file and the command line arguments - none found"
+        log_error(msg)
+        raise EnvironmentError(msg)
+
     with open(ip_file, "a+") as fh:
         fh.seek(0)
         last_ip = fh.readline()
@@ -128,6 +140,12 @@ if __name__ == "__main__":
     for opt in ['update_urls', 'check_urls']:
         args[opt] = args[opt] | set(cmdline[opt])
         cmdline[opt] = None
+        if len(args[opt]) == 0:
+            msg = "Error: There must be at least one {}\n between the\
+            config file and the command line arguments - none found"
+            .format(' '.join(opt[:-1].split('_')))
+            log_error(msg)
+            raise EnvironmentError(msg)
 
     args.update({key:val for key,val in cmdline.items() if val is not None})
     write_ip(get_ip(args['check_urls'], args['fail_rate']),
