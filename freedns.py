@@ -1,10 +1,9 @@
 #!/usr/bin/python
 from urllib.request import urlopen
-import argparse, configparser, socket, sys # For configurations
-import errno                               # For errors
-import os, pwd                             # For checking file ownership
-import re, urllib.error                    # For getting the IP from html
-import syslog                              # For logging
+import argparse, configparser # For configurations
+import os                     # For checking file existence
+import re, urllib.error       # For getting the IP from html
+import syslog                 # For logging
 
 def log_info(msg):
     syslog.syslog(syslog.LOG_INFO, msg)
@@ -62,15 +61,6 @@ def write_ip(ip, ip_file, update_urls):
 # If we just created the IP log file, say so
     if last_ip == "":
         log_info("Created FreeDNS IP log file: {}".format(ip_file))
-
-# Check that the ip file is owned by nobody:nobody
-    stat, ids = (os.stat(ip_file), pwd.getpwnam('nobody'))
-    if (stat.st_uid, stat.st_gid) != (ids.pw_uid, ids.pw_gid):
-        log_error("Error: IP file {} owned by {}\nIt must be owned by nobody"
-            .format(ip_file, pwd.getpwuid(stat.st_uid).pw_name))
-        raise OSError(errno.EACCES,
-            "Error: IP file {} owned by {}\nIt must be owned by nobody"
-            .format(ip_file, pwd.getpwuid(stat.st_uid).pw_name))
 
     if ip != last_ip:
         for url in update_urls:
