@@ -6,17 +6,31 @@ import re, urllib.error       # For getting the IP from html
 import syslog                 # For logging
 
 def log_info(msg):
+"Log an informative message to syslog"
     syslog.syslog(syslog.LOG_INFO, msg)
 
-def log_error(msg):
+def config_error(msg):
+"Log an error to syslog and raise a ConfigError"
+    class ConfigError(EnvironmentError):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
     syslog.syslog(syslog.LOG_ERR, msg)
+    raise ConfigError(msg)
+
+def runtime_error(msg):
+"Log an error to syslog and raise a RuntimeError"
+    syslog.syslog(syslog.LOG_ERR, msg)
+    raise RuntimeError(msg)
 
 def get_ip(check_urls, fail_rate):
+""" Get the IP address of this machine from the URLs listed in check_urls
+    Raises an error if more than fail_rate of the URLs caused trouble
+"""
     if len(check_urls) == 0:
-        msg = "Error: There must be at least one IP checking URL\n between the\
-        config file and the command line arguments - none found"
-        log_error(msg)
-        raise EnvironmentError(msg)
+        config_error(
+        "Error: At least one IP checking URL must be passed to get_ip - \
+        none found")
 
     ret = {}
     begin_regex = r'(?:^|(?<=\s))' # Matches all strings at the beginning of the
@@ -33,10 +47,10 @@ def get_ip(check_urls, fail_rate):
         try:
             ips = ip_regex.findall((urlopen(ip_url).read().decode('utf-8')))
             if len(ips) != 1:
-                msg = "The result from the IP URL {} is ambiguous."
-                    .format(ip_url)
-                log_error(msg)
-                raise ValueError(msg)
+                runtime_error(
+                "The result from the IP URL {} is ambiguous - {} IPs\
+                returned"
+                    .format(ip_url, len(ips)))
             ret[ips[0]] = ret.get(ips[0], {}) | {ip_url}
         except urllib.error.URLError as e:
             if isinstance(e.reason, socket.timeout):
@@ -46,24 +60,22 @@ def get_ip(check_urls, fail_rate):
 
     if 'fail' in ret:
         if len(ret['fail']) > len(check_urls)*fail_rate:
-            msg = "Error: The fail rate is above the acceptable rate"
-            log_error(msg)
-            raise RuntimeError(msg)
+            runtime_error("Error: The fail rate is above the acceptable rate")
         del ret['fail']
     if len(ret.keys()) != 1:
-        msg = "Error: There is no consensus as to the public IP\n\
+        runtime_error("Error: There is no consensus as to the public IP\n\
         Possible public IP addresses are: {}"
-        .format('\n'.join(external_ip.keys()))
-        log_error(msg)
-        raise RuntimeError(msg)
+        .format('\n'.join(external_ip.keys())))
     return set(ret.keys()).pop()
 
 def update_ip(ip, ip_file, update_urls):
+""" Update the IP address the URLs in update_urls point to to this machine's IP
+    address if the IP address passed differs from the one in ip_file - relies on
+    the DDNS hosting site to find the IP address for itself
+"""
     if len(update_urls) == 0:
-        msg = "Error: There must be at least one dynamic DNS update URL\n\
-        between the config file and the command line arguments - none found"
-        log_error(msg)
-        raise EnvironmentError(msg)
+        config_error("Error: At least one DDNS update URL must be passed to\
+        update_ip - none found")
 
     with open(ip_file, "a+") as fh:
         fh.seek(0)
@@ -84,11 +96,11 @@ def update_ip(ip, ip_file, update_urls):
         (last_ip!="") and "from ({})".format(str(last_ip)) or "", str(ip)))
 
 def get_config(conf_path):
-# Overwrite defaults with configuration file
+"Gets the configuration options from the config file at conf_path"
     def make_ini(path):
-    # configparser.ConfigParser expects a header in the configuration file,
-    # but we want shell-like configuration files.
-    # So, to keep ConfigParser happy, we add a header to our configs on the fly
+    """ configparser.ConfigParser expects a header in the configuration file,
+        so in order to be able to do away with it, we supply it ourselves
+    """
         yield '[DEFAULT]\n'
         with open(path) as conf:
             for line in conf:
@@ -109,8 +121,10 @@ def get_config(conf_path):
     return ret
 
 def proper_fraction(string):
-    # Checks if the string represents a proper fraction, throwing
-    # ArgumentTypeError otherwise
+    """ Checks if the string represents a proper fraction, throwing
+        an argparse.ArgumentTypeError otherwise - to satisfy the requirements
+        for the type parameter of argparse.ArgumentParser.add_argument
+    """
     value = float(string)
     if 0 <= value < 1:
         return value
@@ -140,18 +154,16 @@ if __name__ == "__main__":
         args = get_config('/dev/null')
     else:
         if not os.path.exists(cmdline['config']):
-            raise EnvironmentError(cmdline['config'] + " does not exist")
+            config_error(cmdline['config'] + " does not exist")
         args = get_config(cmdline['config'])
 
     for opt in ['update_urls', 'check_urls']:
         args[opt] = args[opt] | set(cmdline[opt])
         cmdline[opt] = None
         if len(args[opt]) == 0:
-            msg = "Error: There must be at least one {}\n between the\
+            config_error("Error: There must be at least one {}\nbetween the\
             config file and the command line arguments - none found"
-            .format(' '.join(opt[:-1].split('_')))
-            log_error(msg)
-            raise EnvironmentError(msg)
+            .format(' '.join(opt[:-1].split('_'))))
 
     args.update({key:val for key,val in cmdline.items() if val is not None})
     update_ip(get_ip(args['check_urls'], args['fail_rate']),
