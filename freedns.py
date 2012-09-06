@@ -11,8 +11,8 @@ def log_info(msg):
 def log_error(msg):
     syslog.syslog(syslog.LOG_ERR, msg)
 
-def get_ip(ip_list, fail_rate):
-    if len(ip_list) == 0:
+def get_ip(check_urls, fail_rate):
+    if len(check_urls) == 0:
         msg = "Error: There must be at least one IP checking URL\n between the\
         config file and the command line arguments - none found"
         log_error(msg)
@@ -29,7 +29,7 @@ def get_ip(ip_list, fail_rate):
                                                           # range 0x00-0xFF)
     ip_regex = re.compile(r'{beg}(?:(?:{oct})\.){{3}}(?:{oct}){end}'
                     .format(oct = octet_regex, beg=begin_regex, end=end_regex))
-    for ip_url in ip_list:
+    for ip_url in check_urls:
         try:
             ips = ip_regex.findall((urlopen(ip_url).read().decode('utf-8')))
             if len(ips) != 1:
@@ -37,15 +37,15 @@ def get_ip(ip_list, fail_rate):
                     .format(ip_url)
                 log_error(msg)
                 raise ValueError(msg)
-            ret[ips[0]] = ret.get(ips[0], []) + [ip_url]
+            ret[ips[0]] = ret.get(ips[0], {}) | {ip_url}
         except urllib.error.URLError as e:
             if isinstance(e.reason, socket.timeout):
-                ret['fail'] += ret.get('fail', []) + [ip_url]
+                ret['fail'] = ret.get('fail', {}) | {ip_url}
             else:
                 raise
 
     if 'fail' in ret:
-        if len(ret['fail']) > len(ip_list)*fail_rate:
+        if len(ret['fail']) > len(check_urls)*fail_rate:
             msg = "Error: The fail rate is above the acceptable rate"
             log_error(msg)
             raise RuntimeError(msg)
@@ -58,7 +58,7 @@ def get_ip(ip_list, fail_rate):
         raise RuntimeError(msg)
     return set(ret.keys()).pop()
 
-def write_ip(ip, ip_file, update_urls):
+def update_ip(ip, ip_file, update_urls):
     if len(update_urls) == 0:
         msg = "Error: There must be at least one dynamic DNS update URL\n\
         between the config file and the command line arguments - none found"
@@ -85,7 +85,7 @@ def write_ip(ip, ip_file, update_urls):
 
 def get_config(conf_path):
 # Overwrite defaults with configuration file
-    def add_head(file, head):
+    def make_ini(path):
     # configparser.ConfigParser expects a header in the configuration file,
     # but we want shell-like configuration files.
     # So, to keep ConfigParser happy, we add a header to our configs on the fly
@@ -94,7 +94,7 @@ def get_config(conf_path):
             yield line
 
     parser = configparser.ConfigParser()
-    parser.read_file(add_head(open(conf_path),'DEFAULT'), conf_path)
+    parser.read_file(make_ini(open(conf_path),'DEFAULT'), conf_path)
     ret = {}
     ret['fail_rate'] = proper_fraction(parser.get('DEFAULT', 'fail_rate',
                                         fallback="0.5"))
@@ -148,5 +148,5 @@ if __name__ == "__main__":
             raise EnvironmentError(msg)
 
     args.update({key:val for key,val in cmdline.items() if val is not None})
-    write_ip(get_ip(args['check_urls'], args['fail_rate']),
+    update_ip(get_ip(args['check_urls'], args['fail_rate']),
             args['ip_file'], args['update_urls'])
