@@ -89,12 +89,13 @@ def get_config(conf_path):
     # configparser.ConfigParser expects a header in the configuration file,
     # but we want shell-like configuration files.
     # So, to keep ConfigParser happy, we add a header to our configs on the fly
-        yield '[{}]\n'.format(head)
-        for line in file:
-            yield line
+        yield '[DEFAULT]\n'
+        with open(path) as conf:
+            for line in conf:
+                yield line
 
     parser = configparser.ConfigParser()
-    parser.read_file(make_ini(open(conf_path),'DEFAULT'), conf_path)
+    parser.read_file(make_ini(conf_path), conf_path)
     ret = {}
     ret['fail_rate'] = proper_fraction(parser.get('DEFAULT', 'fail_rate',
                                         fallback="0.5"))
