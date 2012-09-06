@@ -130,14 +130,19 @@ if __name__ == "__main__":
             help='The maximal acceptable failure rate (Must be in range [0,1))',
             type=proper_fraction)
     parser.add_argument('--config', help='Alternative configuration path')
+    parser.add_argument('--noconfig', action='store_true',
+            help='Disable loading configuration from config file')
     parser.set_defaults(update_urls = None, check_urls = None, ip_file = None,
                         fail_rate = None, config = "/etc/freedns.conf")
     cmdline = vars(parser.parse_args())
 
-    if not os.path.exists(cmdline['config']):
-        raise EnvironmentError(cmdline['config'] + " does not exist")
+    if cmdline['noconfig']:
+        args = get_config('/dev/null')
+    else:
+        if not os.path.exists(cmdline['config']):
+            raise EnvironmentError(cmdline['config'] + " does not exist")
+        args = get_config(cmdline['config'])
 
-    args = get_config(cmdline['config'])
     for opt in ['update_urls', 'check_urls']:
         args[opt] = args[opt] | set(cmdline[opt])
         cmdline[opt] = None
