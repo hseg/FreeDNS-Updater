@@ -93,7 +93,7 @@ def update_ip(ip, ip_file, update_urls):
         fh.write(ip)
 
     log_info("External IP updated {} to ({})".format(
-        (last_ip!="") and "from ({})".format(str(last_ip)) or "", str(ip)))
+        "from ({})".format(str(last_ip)) if last_ip != "" else "", str(ip)))
 
 def get_config(conf_path):
 "Gets the configuration options from the config file at conf_path"
