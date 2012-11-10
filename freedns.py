@@ -6,11 +6,11 @@ import re, urllib.error       # For getting the IP from html
 import syslog                 # For logging
 
 def log_info(msg):
-"Log an informative message to syslog"
+    """Log an informative message to syslog"""
     syslog.syslog(syslog.LOG_INFO, msg)
 
 def config_error(msg):
-"Log an error to syslog and raise a ConfigError"
+    """Log an error to syslog and raise a ConfigError"""
     class ConfigError(EnvironmentError):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -19,14 +19,15 @@ def config_error(msg):
     raise ConfigError(msg)
 
 def runtime_error(msg):
-"Log an error to syslog and raise a RuntimeError"
+    """Log an error to syslog and raise a RuntimeError"""
     syslog.syslog(syslog.LOG_ERR, msg)
     raise RuntimeError(msg)
 
 def get_ip(check_urls, fail_rate):
-""" Get the IP address of this machine from the URLs listed in check_urls
+    """
+    Get the IP address of this machine from the URLs listed in check_urls
     Raises an error if more than fail_rate of the URLs caused trouble
-"""
+    """
     if len(check_urls) == 0:
         config_error(
         "Error: At least one IP checking URL must be passed to get_ip - \
@@ -69,10 +70,11 @@ def get_ip(check_urls, fail_rate):
     return set(ret.keys()).pop()
 
 def update_ip(ip, ip_file, update_urls):
-""" Update the IP address the URLs in update_urls point to to this machine's IP
+    """
+    Update the IP address the URLs in update_urls point to to this machine's IP
     address if the IP address passed differs from the one in ip_file - relies on
     the DDNS hosting site to find the IP address for itself
-"""
+    """
     if len(update_urls) == 0:
         config_error("Error: At least one DDNS update URL must be passed to\
         update_ip - none found")
@@ -96,11 +98,12 @@ def update_ip(ip, ip_file, update_urls):
         "from ({})".format(str(last_ip)) if last_ip != "" else "", str(ip)))
 
 def get_config(conf_path):
-"Gets the configuration options from the config file at conf_path"
+    """Gets the configuration options from the config file at conf_path"""
     def make_ini(path):
-    """ configparser.ConfigParser expects a header in the configuration file,
+        """
+        configparser.ConfigParser expects a header in the configuration file,
         so in order to be able to do away with it, we supply it ourselves
-    """
+        """
         yield '[DEFAULT]\n'
         with open(path) as conf:
             for line in conf:
@@ -121,9 +124,10 @@ def get_config(conf_path):
     return ret
 
 def proper_fraction(string):
-    """ Checks if the string represents a proper fraction, throwing
-        an argparse.ArgumentTypeError otherwise - to satisfy the requirements
-        for the type parameter of argparse.ArgumentParser.add_argument
+    """
+    Checks if the string represents a proper fraction, throwing
+    an argparse.ArgumentTypeError otherwise - to satisfy the requirements
+    for the type parameter of argparse.ArgumentParser.add_argument
     """
     value = float(string)
     if 0 <= value < 1:
