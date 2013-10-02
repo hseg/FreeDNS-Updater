@@ -38,7 +38,7 @@ package() {
   install -D -m755 freedns.py "${pkgdir}/usr/bin/freedns"
   install -d "${pkgdir}/etc/cron.hourly/"
   ln -s /usr/bin/freedns "${pkgdir}/etc/cron.hourly/freedns"
-  install -D -m644 freedns.conf "${pkgdir}/etc/"
+  install -D -m644 freedns.conf "${pkgdir}/etc/freedns.conf"
   install -D -m644 UNLICENSE "${pkgdir}/usr/share/licenses/$pkgname/UNLICENSE"
 }
 
