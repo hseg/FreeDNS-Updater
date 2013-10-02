@@ -4,24 +4,19 @@ import argparse, configparser # For configurations
 import os                     # For checking file existence
 import re, urllib.error       # For getting the IP from html
 import syslog                 # For logging
+import sys                    # For short-circuit exiting
 
 def log_info(msg):
     """Log an informative message to syslog"""
     syslog.syslog(syslog.LOG_INFO, msg)
 
-def config_error(msg):
-    """Log an error to syslog and raise a ConfigError"""
-    class ConfigError(EnvironmentError):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
+def log_error(msg):
+    """
+    Log an error message to syslog and exit.
+    All errors in this script considered fatal.
+    """
     syslog.syslog(syslog.LOG_ERR, msg)
-    raise ConfigError(msg)
-
-def runtime_error(msg):
-    """Log an error to syslog and raise a RuntimeError"""
-    syslog.syslog(syslog.LOG_ERR, msg)
-    raise RuntimeError(msg)
+    sys.exit(1)
 
 def get_ip(check_urls, fail_rate):
     """
@@ -29,7 +24,7 @@ def get_ip(check_urls, fail_rate):
     Raises an error if more than fail_rate of the URLs caused trouble
     """
     if len(check_urls) == 0:
-        config_error(
+        log_error(
         "Error: At least one IP checking URL must be passed to get_ip - \
         none found")
 
@@ -48,7 +43,7 @@ def get_ip(check_urls, fail_rate):
         try:
             ips = ip_regex.findall((urlopen(ip_url).read().decode('utf-8')))
             if len(ips) != 1:
-                runtime_error(
+                log_error(
                 "The result from the IP URL {} is ambiguous - {} IPs\
                 returned"
                     .format(ip_url, len(ips)))
@@ -61,10 +56,10 @@ def get_ip(check_urls, fail_rate):
 
     if 'fail' in ret:
         if len(ret['fail']) > len(check_urls)*fail_rate:
-            runtime_error("Error: The fail rate is above the acceptable rate")
+            log_error("Error: The fail rate is above the acceptable rate")
         del ret['fail']
     if len(ret.keys()) != 1:
-        runtime_error("Error: There is no consensus as to the public IP\n\
+        log_error("Error: There is no consensus as to the public IP\n\
         Possible public IP addresses are: {}"
         .format('\n'.join(external_ip.keys())))
     return set(ret.keys()).pop()
@@ -76,7 +71,7 @@ def update_ip(ip, ip_file, update_urls):
     the DDNS hosting site to find the IP address for itself
     """
     if len(update_urls) == 0:
-        config_error("Error: At least one DDNS update URL must be passed to\
+        log_error("Error: At least one DDNS update URL must be passed to\
         update_ip - none found")
 
     with open(ip_file, "a+") as fh:
@@ -158,14 +153,14 @@ if __name__ == "__main__":
         args = get_config('/dev/null')
     else:
         if not os.path.exists(cmdline['config']):
-            config_error(cmdline['config'] + " does not exist")
+            log_error(cmdline['config'] + " does not exist")
         args = get_config(cmdline['config'])
 
     for opt in ['update_urls', 'check_urls']:
         args[opt] = args[opt] | set(cmdline[opt])
         cmdline[opt] = None
         if len(args[opt]) == 0:
-            config_error("Error: There must be at least one {}\nbetween the\
+            log_error("Error: There must be at least one {}\nbetween the\
             config file and the command line arguments - none found"
             .format(' '.join(opt[:-1].split('_'))))
 
