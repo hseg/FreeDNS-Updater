@@ -8,7 +8,6 @@ url="http://www.github.com/InvisibleEngineer/FreeDNS-Updater"
 license=('custom:UNLICENSE')
 depends=('python')
 makedepends=('git')
-install='freedns.install'
 backup=('etc/freedns.conf')
 changelog='CHANGELOG'
 _gitroot="git://github.com/InvisibleEngineer/FreeDNS-Updater.git"
@@ -36,8 +35,6 @@ package() {
   cd "$srcdir/$_gitname-build"
   install -d "${pkgdir}/var/cache/$pkgname"
   install -D -m755 freedns.py "${pkgdir}/usr/bin/freedns"
-  install -d "${pkgdir}/etc/cron.hourly/"
-  ln -s /usr/bin/freedns "${pkgdir}/etc/cron.hourly/freedns"
   install -D -m644 freedns.conf "${pkgdir}/etc/freedns.conf"
   install -D -m644 UNLICENSE "${pkgdir}/usr/share/licenses/$pkgname/UNLICENSE"
 }
