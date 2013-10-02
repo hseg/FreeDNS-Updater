@@ -1,6 +1,6 @@
 # Maintainer: Gesh <moystovi@g.jct.ac.il>
 pkgname=freedns-updater-git
-pkgver=
+pkgver=2013.10.02.10ab161
 pkgrel=1
 pkgdesc="Updates freedns.afraid.org dynamic dns domains"
 arch=('any')
@@ -9,7 +9,6 @@ license=('custom:UNLICENSE')
 depends=('python')
 makedepends=('git')
 backup=('etc/freedns.conf')
-changelog='CHANGELOG'
 _repodir=${pkgname%-git}
 source=("${_repodir}::git+git://github.com/InvisibleEngineer/FreeDNS-Updater.git")
 md5sums=('SKIP')
