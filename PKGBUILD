@@ -1,6 +1,6 @@
 # Maintainer: Gesh <moystovi@g.jct.ac.il>
 pkgname=freedns-updater-git
-pkgver=20120823
+pkgver=
 pkgrel=1
 pkgdesc="Updates freedns.afraid.org dynamic dns domains"
 arch=('any')
@@ -10,29 +10,18 @@ depends=('python')
 makedepends=('git')
 backup=('etc/freedns.conf')
 changelog='CHANGELOG'
-_gitroot="git://github.com/InvisibleEngineer/FreeDNS-Updater.git"
-_gitname=FreeDNS-Updater
+_repodir=${pkgname%-git}
+source=("${_repodir}::git+git://github.com/InvisibleEngineer/FreeDNS-Updater.git")
+md5sums=('SKIP')
 
-build() {
+pkgver() {
   cd "$srcdir"
-  msg "Connecting to GIT server...."
-
-  if [[ -d "$_gitname" ]]; then
-    cd "$_gitname" && git pull origin
-    msg "The local files are updated."
-  else
-    git clone "$_gitroot" "$_gitname"
-  fi
-
-  msg "GIT checkout done or server timeout"
-  msg "Starting install..."
-
-  rm -rf "$srcdir/$_gitname-build"
-  git clone "$srcdir/$_gitname" "$srcdir/$_gitname-build"
+  # Use date and hash of last commit.
+  git log -1 --format=%cd-%h --date=short | sed -e 's/-/./g'
 }
 
 package() {
-  cd "$srcdir/$_gitname-build"
+  cd "$srcdir/$_repodir"
   install -d "${pkgdir}/var/cache/$pkgname"
   install -D -m755 freedns.py "${pkgdir}/usr/bin/freedns"
   install -D -m644 freedns.conf "${pkgdir}/etc/freedns.conf"
